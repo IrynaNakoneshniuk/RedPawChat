@@ -8,5 +8,6 @@ namespace DBAccess.DBAccess
         Task SaveData<T>(string storedProcedure, T parametrs);
         Task GetContactInfo(string storedProcedure, User user);
         Task GetConversationsInfo(string storedProcedure, User user);
+        Task<int?> GetScalarValue(string storedProcedure, User user, string roleName);
     }
 }

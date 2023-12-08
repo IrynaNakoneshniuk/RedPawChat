@@ -11,7 +11,7 @@ namespace RedPawChat.Server.Controllers
         private IUserDataAccess _dataAccess;
         private IAdminDataAccess _adminDataAccess;
 
-        HomeController(IUserDataAccess dataAccess, IAdminDataAccess adminDataAccess)
+        public HomeController(IUserDataAccess dataAccess, IAdminDataAccess adminDataAccess)
         {
             _dataAccess = dataAccess;
             _adminDataAccess = adminDataAccess;

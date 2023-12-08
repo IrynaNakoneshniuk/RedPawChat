@@ -13,6 +13,19 @@ namespace DataAccessRedPaw.UserAccessData
             _dataAccess = dataAccess;
         }
 
+
+        public async Task<User?> FindUserById(Guid id)
+        {
+            var userResult = await _dataAccess.LoadData<User,dynamic>("spFindByIdAsync",new {Id= id });
+
+            return userResult.FirstOrDefault();
+        }
+
+        public async Task DeleteUserById(User user)
+        {
+            await _dataAccess.SaveData<dynamic>("spDeleteUser",new {Id=user.Id});
+        }
+
         // Registers a new user in the system.
         public async Task Registration(User user)
         {
@@ -23,7 +36,7 @@ namespace DataAccessRedPaw.UserAccessData
                 NickName = user.NickName,
                 Email = user.Email,
                 Password = user.Password,
-                FirstName = user.FirstName,
+                FirstName = user.UserName,
                 LastName = user.LastName,
                 MiddleName = user.MiddleName,
                 CreatedAt = user.CreatedAt,
@@ -44,6 +57,22 @@ namespace DataAccessRedPaw.UserAccessData
             return user.FirstOrDefault();
         }
 
+        //public async Task<User?> FindByName(string name)
+        //{
+        //    return 
+        //}
+
+        public async Task<User?> FindUserByEmail(string email)
+        {
+            var user = await _dataAccess.LoadData<User, dynamic>(
+                "spFindUserByEmail",
+                new { Email = email }
+            );
+
+            // Return the first user found (or null if none).
+            return user.FirstOrDefault();
+        }
+
         // Updates account information for a user.
         public async Task UpdateAccount(User user)
         {
@@ -53,7 +82,7 @@ namespace DataAccessRedPaw.UserAccessData
             {
                 Id = user.Id,
                 NickName = user.NickName,
-                FirstName = user.FirstName,
+                UserName = user.UserName,
                 LastName = user.LastName,
                 MiddleName = user.MiddleName,
             });
@@ -146,6 +175,37 @@ namespace DataAccessRedPaw.UserAccessData
         public async Task<IEnumerable<User>?> FindContactByNickName(string nickName)
         {
             return await _dataAccess.LoadData<User, dynamic>("spFindContact", new { NickName = nickName });
+        }
+
+        public async Task<IEnumerable<User?>> FindUserByName(string name)
+        {
+            return await _dataAccess.LoadData<User, dynamic>("spFindUserByName", new { NormalizeName = name.ToUpper() });
+            
+        }
+
+        public async Task<int?> IsInRoleUser(User user, string roleName)
+        {
+            return await _dataAccess.GetScalarValue("pIsInRoleAsync", user, roleName);
+        }
+
+        public async Task<IEnumerable<string?>> GetUsersRole(User user)
+        {
+            return await _dataAccess.LoadData<string, dynamic>("spGetRolesAsync", new { Id = user.Id });
+        }
+
+        public async Task<IEnumerable<User?>> GetUsersInRoleAsync(string roleName)
+        {
+            return await _dataAccess.LoadData<User,dynamic>("spGetUsersInRoleAsync", new { RoleName = roleName.ToUpper()}); 
+        }
+
+        public async Task AddToRoleAsync(User user, string roleName)
+        {
+            await _dataAccess.SaveData("spAddToRole", new { Id =user.Id, RoleNameNormalize = roleName.ToUpper()});
+        }
+
+        public async Task RemoveFromRole(User user, string roleName)
+        {
+            await _dataAccess.SaveData("spRemoveFromRole", new { Id = user.Id, RoleNameNormalize = roleName.ToUpper() });
         }
     }
 }

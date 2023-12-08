@@ -1,10 +1,13 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import App from './App.jsx'
+
+import AuthForm from './AuthForm.jsx'
 import './index.css'
+import axios from 'axios';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <App />
+    <AuthForm/>
   </React.StrictMode>,
 )
+

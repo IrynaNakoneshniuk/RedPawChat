@@ -164,6 +164,25 @@ namespace DBAccess.DBAccess
                 throw;
             }
         }
+
+        public async Task<int?> GetScalarValue(string storedProcedure, User user, string roleName)
+        {
+            // Establishes a connection to the database
+            using IDbConnection connection = _context.CreateConnection();
+
+            var parameters = new { Id = user.Id, NameRole = roleName.ToUpper()};
+
+            try
+            {
+                return await connection.ExecuteScalarAsync<int?>(storedProcedure, parameters);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+
+                throw;
+            }
+        }
     }
 
 }
