@@ -6,10 +6,9 @@ using Microsoft.AspNetCore.Identity;
 using RedPaw.Models;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using RedPawChat.Server.Services;
-using AspNetCore.Identity.Dapper;
 using WebApp.Models;
 using WebApp.Data;
-using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +16,14 @@ builder.Services.AddTransient<IUserStore<User>, UserStore>();
 builder.Services.AddTransient<IRoleStore<ApplicationRole>, RoleStore>();
 
 builder.Services.AddIdentity<User, ApplicationRole>();
+builder.Services.Configure<IdentityOptions>(options =>
+{
+    options.SignIn.RequireConfirmedAccount = false;
+    options.ClaimsIdentity.RoleClaimType = ClaimTypes.Role;
+
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.User.RequireUniqueEmail = true;
+});
 
 builder.Services.AddAuthentication("RedPawAuth").AddCookie("RedPawAuth", options =>
 {

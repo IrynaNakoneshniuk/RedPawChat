@@ -1,30 +1,26 @@
-﻿using System.IdentityModel.Tokens.Jwt;
-using System.Reflection;
-using System.Security.Claims;
-using System.Text;
-using DataAccessRedPaw.UserAccessData;
-using DBAccess.AppSetting;
+﻿using DataAccessRedPaw.UserAccessData;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.WebUtilities;
 using RedPaw.Models;
+using RedPawChat.Server.Filters;
+using System.Text.Encodings.Web;
+using System.Text;
+using Microsoft.AspNetCore.Identity.UI.Services;
 
 namespace RedPawChat.Server.Controllers
 {
     [Route("api/account")]
     [ApiController]
+   
     public class AccountController : ControllerBase
     {
-        private IUserDataAccess _dataAccess;
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
-        
-        public AccountController(IUserDataAccess dataAccess, UserManager<User> userManager, SignInManager<User> signInManager)
+
+        public AccountController(UserManager<User> userManager, SignInManager<User> signInManager)
         {
-            _dataAccess = dataAccess;
             _signInManager = signInManager;
             _userManager= userManager;  
         }
@@ -37,72 +33,87 @@ namespace RedPawChat.Server.Controllers
        
         [HttpPost]
         [Route("Register")]
-        [Authorize(Policy = "AccessChatResources")]
+        [SignInResultFilter]
         //POST : /api/User/Register
-        public async Task<Object> Register(User model)
+        public async Task<Object> Register(string email, string userName, string lastName,string middleName,string password,
+            string nickName)
         {
-            if(model!=null)
+            var applicationUser = new User()
             {
-                var applicationUser = new User()
-                {
-                    Email = model.Email,
-                    UserName = model.UserName,
-                    LastName = model.LastName,
-                    MiddleName = model.MiddleName,
-                    Password = model.Password,
-                    CreatedAt = DateTime.UtcNow,
-                    NickName = model.NickName,
-                    ImageData = model.ImageData,
-                };
+                Email = email,
+                UserName = userName,
+                LastName = lastName,
+                MiddleName = middleName,
+                Password = password,
+                CreatedAt = DateTime.UtcNow,
+                NickName = nickName,
+                ImageData = null,
 
-                await _dataAccess.Registration(applicationUser);
-                return Ok();
-            }
-            else
+            };
+
+            var result = await _userManager.CreateAsync(applicationUser,applicationUser.Password);
+
+            //await _userManager.UpdateSecurityStampAsync(applicationUser);   
+
+            if (result.Succeeded)
             {
-                return BadRequest();
+                //await _signInManager.PasswordSignInAsync(email, password, true, lockoutOnFailure: false);
+                await _signInManager.SignInAsync(applicationUser, isPersistent: true);
             }
+            return Ok();
         }
-
 
         [HttpPost]
         [Route("Login")]
+        [SignInResultFilter]
         public async Task<IActionResult> Login(string email,string password)
-        {
-            //var user = await _dataAccess.UserAuthentication(email, password);
-         
-            var user = await _signInManager.PasswordSignInAsync(email, password, true, lockoutOnFailure: false);
-            if (user.Succeeded)
+        { 
+            var resultSignIn = await _signInManager.PasswordSignInAsync(email, password, true, lockoutOnFailure: false);
+
+            if (resultSignIn.Succeeded)
             {
-                try
-                {
-                    var claims = new List<Claim>() {
-                    new Claim(ClaimTypes.Name,email),
-                    new Claim(ClaimTypes.Upn,password),
-                    new Claim(ClaimTypes.Role,"Admin")
-                    };
-
-                    var identity= new ClaimsIdentity(claims, "RedPawAuth"); 
-                    ClaimsPrincipal claimsPrincipal = new ClaimsPrincipal(identity);
-
-                    var authProperty = new AuthenticationProperties
-                    {
-                        IsPersistent = true,
-                    };
-                    await HttpContext.SignInAsync("RedPawAuth", claimsPrincipal, authProperty);
-
-                    //var roles = await _userManager.GetRolesAsync(user);
-
-                    return Ok(new { user });
-
-                }
-                catch (Exception exp)
-                {
-                    throw;
-                }
+                return Ok();
             }
             else
                 return BadRequest(new { message = "Username or password is incorrect." });
         }
+
+        [HttpPost("changepassword")]
+        public async Task<IActionResult> ChangePassword(string email, string currentPassword,string newPassword)
+        {
+            if (ModelState.IsValid)
+            {
+                var user = await _userManager.FindByNameAsync(email);
+
+                if (user == null)
+                {
+                    return BadRequest("Invalid username.");
+                }
+
+                var result = await _userManager.CheckPasswordAsync(user, currentPassword);
+               
+
+                //if (!result)
+                //{
+                //    return BadRequest("Invalid current password.");
+                //}
+
+
+                var changePasswordResult = await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+
+                if (changePasswordResult.Succeeded)
+                {
+                    //await _userManager.UpdateSecurityStampAsync(user);
+                    return Ok("Password changed successfully.");
+                }
+                else
+                {
+                    return BadRequest("Failed to change password.");
+                }
+            }
+
+            return BadRequest(ModelState);
+        }
     }
+
 }

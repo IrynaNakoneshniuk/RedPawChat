@@ -1,5 +1,4 @@
 ﻿using RedPaw.Models;
-using System.Threading.Tasks;
 
 namespace DataAccessRedPaw.UserAccessData
 {
@@ -27,5 +26,7 @@ namespace DataAccessRedPaw.UserAccessData
         Task<IEnumerable<User?>> GetUsersInRoleAsync(string roleName);
         Task AddToRoleAsync(User user, string roleName);
         Task RemoveFromRole(User user, string roleName);
+        Task<User?> SignInUser(string email, string password);
+        Task<string?> GetSecurityStamp(User user);
     }
 }

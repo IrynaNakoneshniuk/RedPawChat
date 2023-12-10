@@ -1,4 +1,5 @@
 ﻿using DBAccess.DBAccess;
+using Microsoft.AspNetCore.Identity;
 using RedPaw.Models;
 
 namespace DataAccessRedPaw.UserAccessData
@@ -36,11 +37,21 @@ namespace DataAccessRedPaw.UserAccessData
                 NickName = user.NickName,
                 Email = user.Email,
                 Password = user.Password,
-                FirstName = user.UserName,
+                UserName = user.UserName,
                 LastName = user.LastName,
                 MiddleName = user.MiddleName,
                 CreatedAt = user.CreatedAt,
                 ImageData = user.ImageData,
+                NormalizedUserName = user.UserName?.ToUpper(),
+                NormalizedEmail = user.Email.ToUpper(),
+                PasswordHash = user.PasswordHash,
+                TwoFactorEnabled = user.TwoFactorEnabled,
+                SecurityStamp=user.SecurityStamp,
+                ConcurrencyStamp = user.ConcurrencyStamp,
+                EmailConfirmed=user.EmailConfirmed,
+                AccessFailedCount=user.AccessFailedCount,
+                LockoutEnabled=user.LockoutEnabled,
+
             });
         }
 
@@ -57,10 +68,18 @@ namespace DataAccessRedPaw.UserAccessData
             return user.FirstOrDefault();
         }
 
-        //public async Task<User?> FindByName(string name)
-        //{
-        //    return 
-        //}
+        public async Task<User?> SignInUser(string email, string password)
+        {
+          var user=  await UserAuthentication(email, password);
+
+            if (user != null)
+            {
+                await GetConversationInfo(user);
+            }
+
+            return user;
+        }
+
 
         public async Task<User?> FindUserByEmail(string email)
         {
@@ -85,6 +104,10 @@ namespace DataAccessRedPaw.UserAccessData
                 UserName = user.UserName,
                 LastName = user.LastName,
                 MiddleName = user.MiddleName,
+                Password=user.Password,
+                PasswordHash= user.PasswordHash,
+                SecurityStamp= user.SecurityStamp,
+                ConcurrencyStamp=user.ConcurrencyStamp,
             });
         }
 
@@ -206,6 +229,12 @@ namespace DataAccessRedPaw.UserAccessData
         public async Task RemoveFromRole(User user, string roleName)
         {
             await _dataAccess.SaveData("spRemoveFromRole", new { Id = user.Id, RoleNameNormalize = roleName.ToUpper() });
+        }
+
+        public async Task<string?> GetSecurityStamp(User user)
+        {
+           var res= await _dataAccess.LoadData<string?, dynamic>("spGetSecurityStamp", new { IdUser = user.Id });
+            return res.FirstOrDefault();
         }
     }
 }

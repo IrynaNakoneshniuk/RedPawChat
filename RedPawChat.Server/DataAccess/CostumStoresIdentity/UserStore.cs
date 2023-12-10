@@ -1,12 +1,15 @@
 ﻿using DataAccessRedPaw.UserAccessData;
 using Microsoft.AspNetCore.Identity;
 using RedPaw.Models;
+using System.Text;
+using System.Text.RegularExpressions;
+using static System.Net.Mime.MediaTypeNames;
 
 
 namespace WebApp.Data
 {
     public class UserStore : IUserStore<User>, IUserEmailStore<User>, IUserPhoneNumberStore<User>,
-        IUserTwoFactorStore<User>, IUserPasswordStore<User>, IUserRoleStore<User>
+        IUserTwoFactorStore<User>, IUserPasswordStore<User>, IUserRoleStore<User>,IUserSecurityStampStore<User>
     {
         private readonly IUserDataAccess _userDataAccess;
 
@@ -158,16 +161,15 @@ namespace WebApp.Data
             return Task.FromResult(user.TwoFactorEnabled);
         }
 
-        public Task SetPasswordHashAsync(User user, string passwordHash, CancellationToken cancellationToken)
+        public Task SetPasswordHashAsync(User user, string? passwordHash, CancellationToken cancellationToken)
         {
             user.PasswordHash = passwordHash;
             return Task.FromResult(0);
         }
 
-        public Task<string> GetPasswordHashAsync(User user, CancellationToken cancellationToken)
+        public Task<string?> GetPasswordHashAsync(User user, CancellationToken cancellationToken)
         {
-            var passwordHasher = new PasswordHasher<User>();
-            return Task.FromResult(passwordHasher.HashPassword(user,user.Password));
+            return Task.FromResult(user.PasswordHash);
         }
 
         public Task<bool> HasPasswordAsync(User user, CancellationToken cancellationToken)
@@ -193,7 +195,9 @@ namespace WebApp.Data
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            return (IList<string>)await _userDataAccess.GetUsersRole(user);
+            var res= (IList<string>)await _userDataAccess.GetUsersRole(user);
+
+            return res;
         }
 
         public async Task<bool> IsInRoleAsync(User user, string roleName, CancellationToken cancellationToken)
@@ -216,12 +220,7 @@ namespace WebApp.Data
             // Nothing to dispose.
         }
 
-        
-        Task<IList<User>> IUserRoleStore<User>.GetUsersInRoleAsync(string roleName, CancellationToken cancellationToken)
-        {
-            throw new NotImplementedException();
-        }
-
+       
         async Task<User?> IUserStore<User>.FindByIdAsync(string userId, CancellationToken cancellationToken)
         {
             return await _userDataAccess.FindUserById(new Guid(userId));
@@ -229,9 +228,20 @@ namespace WebApp.Data
 
         async Task<User?> IUserStore<User>.FindByNameAsync(string normalizedUserName, CancellationToken cancellationToken)
         {
-            var users=await _userDataAccess.FindUserByName(normalizedUserName);
+            return await _userDataAccess.FindUserByEmail(normalizedUserName);
+        }
 
-            return users.FirstOrDefault();
+        public Task SetSecurityStampAsync(User user, string stamp, CancellationToken cancellationToken)
+        {
+           user.SecurityStamp = stamp;
+           return Task.CompletedTask;
+        }
+
+        public async Task<string?> GetSecurityStampAsync(User user, CancellationToken cancellationToken)
+        {
+            //return await _userDataAccess.GetSecurityStamp(user);
+
+            return await Task.FromResult(user.SecurityStamp);
         }
     }
 }
