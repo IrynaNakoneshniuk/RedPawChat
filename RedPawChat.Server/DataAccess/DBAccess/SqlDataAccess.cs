@@ -2,6 +2,7 @@
 using System.Data;
 using RedPaw.Models;
 using RedPawChat.Server.DataAccess.DapperContext;
+using System.Security.Claims;
 
 namespace DBAccess.DBAccess
 {
@@ -183,6 +184,32 @@ namespace DBAccess.DBAccess
                 throw;
             }
         }
+
+        public async Task SaveClaimsListAtDb(string storedProcedure,Guid userId, IEnumerable<Claim> claims)
+        {
+            using IDbConnection connection = _context.CreateConnection();
+            try
+            {
+                foreach (var claim in claims)
+                {
+
+                    var parametrs = new { UserId = userId, ClaimType = claim.Type, ClaimValue = claim.Value };
+
+                    await connection.ExecuteAsync(storedProcedure, parametrs);
+                }
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+
+                throw;
+            }
+            
+
+        }
+        
+
+        
     }
 
 }

@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Authentication;
 using System.Security.Claims;
-using RedPaw.Models;
 
 
 namespace RedPawChat.Server.Filters;

@@ -1,4 +1,5 @@
 ﻿using RedPaw.Models;
+using System.Security.Claims;
 
 namespace DBAccess.DBAccess
 {
@@ -9,5 +10,6 @@ namespace DBAccess.DBAccess
         Task GetContactInfo(string storedProcedure, User user);
         Task GetConversationsInfo(string storedProcedure, User user);
         Task<int?> GetScalarValue(string storedProcedure, User user, string roleName);
+        Task SaveClaimsListAtDb(string storedProcedure, Guid userId, IEnumerable<Claim> claims);
     }
 }

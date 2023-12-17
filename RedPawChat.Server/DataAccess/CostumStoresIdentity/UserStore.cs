@@ -1,10 +1,8 @@
 ﻿using DataAccessRedPaw.UserAccessData;
 using Microsoft.AspNetCore.Identity;
 using RedPaw.Models;
-using System.Text;
-using System.Text.RegularExpressions;
-using static System.Net.Mime.MediaTypeNames;
-
+using System.Collections;
+using System.Security.Claims;
 
 namespace WebApp.Data
 {
@@ -239,9 +237,39 @@ namespace WebApp.Data
 
         public async Task<string?> GetSecurityStampAsync(User user, CancellationToken cancellationToken)
         {
-            //return await _userDataAccess.GetSecurityStamp(user);
-
             return await Task.FromResult(user.SecurityStamp);
         }
+
+        //public async Task<IList<Claim>> GetClaimsAsync(User user, CancellationToken cancellationToken)
+        //{
+        //    cancellationToken.ThrowIfCancellationRequested();
+        //    var listClaims = await _userDataAccess.GetClaimsAsync(user);
+        //    user.Claims= listClaims.ToList();
+        //    return user.Claims;
+        //}
+
+        //public async Task AddClaimsAsync(User user, IEnumerable<Claim> claims, CancellationToken cancellationToken)
+        //{
+        //    cancellationToken.ThrowIfCancellationRequested();
+
+        //    await _userDataAccess.AddClaimsAsync(user, claims);
+        //}
+
+        //public async Task ReplaceClaimAsync(User user, Claim claim, Claim newClaim, CancellationToken cancellationToken)
+        //{
+        //    cancellationToken.ThrowIfCancellationRequested();
+
+        //    await _userDataAccess.UpdateUserClaim(user, claim, newClaim);
+        //}
+
+        //public Task RemoveClaimsAsync(User user, IEnumerable<Claim> claims, CancellationToken cancellationToken)
+        //{
+        //    throw new NotImplementedException();
+        //}
+
+        //public Task<IList<User>> GetUsersForClaimAsync(Claim claim, CancellationToken cancellationToken)
+        //{
+        //    throw new NotImplementedException();
+        //}
     }
 }

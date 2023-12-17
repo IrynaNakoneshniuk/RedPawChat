@@ -1,4 +1,5 @@
 ﻿using RedPaw.Models;
+using System.Security.Claims;
 
 namespace DataAccessRedPaw.UserAccessData
 {
@@ -28,5 +29,9 @@ namespace DataAccessRedPaw.UserAccessData
         Task RemoveFromRole(User user, string roleName);
         Task<User?> SignInUser(string email, string password);
         Task<string?> GetSecurityStamp(User user);
+        Task<IEnumerable<Claim>> GetClaimsAsync(Guid userId);
+        Task AddClaimsAsync(User user, IEnumerable<Claim> claims);
+
+        Task UpdateUserClaim(User user, Claim claim, Claim newClaim);
     }
 }

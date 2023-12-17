@@ -1,6 +1,10 @@
 ﻿using DBAccess.DBAccess;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Identity.Client;
 using RedPaw.Models;
+using RedPawChat.Server.DataAccess.Models.DTO;
+using System;
+using System.Security.Claims;
 
 namespace DataAccessRedPaw.UserAccessData
 {
@@ -235,6 +239,30 @@ namespace DataAccessRedPaw.UserAccessData
         {
            var res= await _dataAccess.LoadData<string?, dynamic>("spGetSecurityStamp", new { IdUser = user.Id });
             return res.FirstOrDefault();
+        }
+
+        public async Task<IEnumerable<Claim>> GetClaimsAsync(Guid userId)
+        {
+            var listClaims= await _dataAccess.LoadData<UserClaimDto, dynamic>("spGetUserClaims", new { UserId = userId });
+
+            return listClaims.Select(r => new Claim(r.ClaimType, r.ClaimValue)).ToList();
+        }
+
+        public async Task AddClaimsAsync(User user, IEnumerable<Claim> claims)
+        {
+             await _dataAccess.SaveClaimsListAtDb("spAddUserClaim",user.Id,claims);   
+        }
+
+        public async Task UpdateUserClaim(User user, Claim claim, Claim newClaim)
+        {
+            await _dataAccess.SaveData<dynamic>("spUpdateUserClaim", new
+            {
+                UserId = user.Id,
+                NewClaimType = newClaim.Type,
+                NewClaimValue = newClaim.Value,
+                ClaimType = claim.Value,
+                ClaimValue = claim.Value
+            });
         }
     }
 }

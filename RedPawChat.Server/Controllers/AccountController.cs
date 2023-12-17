@@ -2,12 +2,12 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.WebUtilities;
 using RedPaw.Models;
+using RedPawChat.Server.DataAccess.Models;
 using RedPawChat.Server.Filters;
-using System.Text.Encodings.Web;
-using System.Text;
-using Microsoft.AspNetCore.Identity.UI.Services;
+using System.Net.WebSockets;
+using System.Security.Claims;
+
 
 namespace RedPawChat.Server.Controllers
 {
@@ -18,22 +18,24 @@ namespace RedPawChat.Server.Controllers
     {
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
-
-        public AccountController(UserManager<User> userManager, SignInManager<User> signInManager)
+        private readonly IUserDataAccess _userDataAccess;
+        public AccountController(UserManager<User> userManager, SignInManager<User> signInManager, IUserDataAccess userDataAccess)
         {
             _signInManager = signInManager;
-            _userManager= userManager;  
+            _userManager= userManager;
+            _userDataAccess= userDataAccess;
         }
 
         [HttpGet]
         public IActionResult GetAll()
         {
+            var cookies=Request.Cookies;
+            
             return Ok();
         }
        
         [HttpPost]
         [Route("Register")]
-        [SignInResultFilter]
         //POST : /api/User/Register
         public async Task<Object> Register(string email, string userName, string lastName,string middleName,string password,
             string nickName)
@@ -53,32 +55,55 @@ namespace RedPawChat.Server.Controllers
 
             var result = await _userManager.CreateAsync(applicationUser,applicationUser.Password);
 
-            //await _userManager.UpdateSecurityStampAsync(applicationUser);   
-
             if (result.Succeeded)
             {
-                //await _signInManager.PasswordSignInAsync(email, password, true, lockoutOnFailure: false);
-                await _signInManager.SignInAsync(applicationUser, isPersistent: true);
+               
+
+                var claims = new List<Claim>()
+                {
+                    new Claim("Email", email),
+                    new Claim("Role","User")
+                };
+
+                var user= await _userDataAccess.FindUserByEmail(email);
+                await _userDataAccess.AddClaimsAsync(user, claims);
+                var identity = new ClaimsIdentity(claims, "RedPawAuth");
+                ClaimsPrincipal claimsPrincipal = new ClaimsPrincipal(identity);
+
+                var resultSignIn=await _signInManager.PasswordSignInAsync(email,password, true, lockoutOnFailure: false);
+                await HttpContext.SignInAsync("RedPawAuth", claimsPrincipal, new AuthenticationProperties { IsPersistent = true });
+                return Ok();
             }
-            return Ok();
+            else
+            {
+                return BadRequest();
+            }
         }
 
         [HttpPost]
         [Route("Login")]
-        [SignInResultFilter]
-        public async Task<IActionResult> Login(string email,string password)
-        { 
-            var resultSignIn = await _signInManager.PasswordSignInAsync(email, password, true, lockoutOnFailure: false);
+      
+        public async Task<IActionResult> Login([FromBody] LoginInfo loginModel)
+        {
+            var resultSignIn = await _signInManager.PasswordSignInAsync(loginModel.Email, loginModel.Password, true, lockoutOnFailure: false);
 
             if (resultSignIn.Succeeded)
             {
+                var user = await _userDataAccess.FindUserByEmail(loginModel.Email);
+                var claims = await _userDataAccess.GetClaimsAsync(user.Id);
+                var identity = new ClaimsIdentity(claims,"RedPawAuth");
+                ClaimsPrincipal claimsPrincipal = new ClaimsPrincipal(identity);
+
+                await HttpContext.SignInAsync("RedPawAuth", claimsPrincipal, new AuthenticationProperties { IsPersistent = false });
+
                 return Ok();
             }
             else
                 return BadRequest(new { message = "Username or password is incorrect." });
         }
 
-        [HttpPost("changepassword")]
+        [HttpPost("СhangePassword")]
+        [SignInResultFilter]
         public async Task<IActionResult> ChangePassword(string email, string currentPassword,string newPassword)
         {
             if (ModelState.IsValid)
@@ -91,19 +116,18 @@ namespace RedPawChat.Server.Controllers
                 }
 
                 var result = await _userManager.CheckPasswordAsync(user, currentPassword);
-               
-
-                //if (!result)
-                //{
-                //    return BadRequest("Invalid current password.");
-                //}
 
 
+                if (!result)
+                {
+                    return BadRequest("Invalid current password.");
+                }
+
+                user.Password = newPassword;
                 var changePasswordResult = await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
 
                 if (changePasswordResult.Succeeded)
                 {
-                    //await _userManager.UpdateSecurityStampAsync(user);
                     return Ok("Password changed successfully.");
                 }
                 else

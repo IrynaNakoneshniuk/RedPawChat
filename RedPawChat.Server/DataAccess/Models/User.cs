@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using System.Security.Claims;
 
 namespace RedPaw.Models;
 
@@ -37,4 +38,5 @@ public  class User: IdentityUser
     public virtual IEnumerable<Contacts> ? ContactUsers { get; set; }
     public virtual IEnumerable<GroupMember> ? GroupMembers { get; set; }
     public virtual IEnumerable<Conversations> ? Conversations  { get; set; } 
+    public virtual IList<Claim> Claims { get; set; }
 }
