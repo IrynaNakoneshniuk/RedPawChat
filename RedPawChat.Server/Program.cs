@@ -1,6 +1,5 @@
 using DataAccessRedPaw.UserAccessData;
 using DBAccess.DBAccess;
-using RedPawChat.Server;
 using RedPawChat.Server.DataAccess.DapperContext;
 using Microsoft.AspNetCore.Identity;
 using RedPaw.Models;
@@ -8,10 +7,11 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using RedPawChat.Server.Services;
 using WebApp.Models;
 using WebApp.Data;
-using System.Security.Claims;
-using RedPawChat.Server.DataAccess.Models;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication;
+using System.Net;
+using Microsoft.AspNetCore.Builder;
+using RedPawChat.Server.DataAccess.Models.DTO;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,28 +19,45 @@ builder.Services.AddTransient<IUserStore<User>, UserStore>();
 builder.Services.AddTransient<IRoleStore<ApplicationRole>, RoleStore>();
 builder.Services.AddIdentity<User, ApplicationRole>();
 builder.Services.AddTransient<LoginInfo>();
+builder.Services.AddHsts(options =>
+{
+    options.Preload = true;
+    options.IncludeSubDomains = true;
+    options.MaxAge = TimeSpan.FromDays(60);
+});
+
 builder.Services.Configure<IdentityOptions>(options =>
 {
-    options.SignIn.RequireConfirmedAccount = false;
-    //options.ClaimsIdentity.RoleClaimType = ClaimTypes.Role;
-
     options.Lockout.MaxFailedAccessAttempts = 5;
     options.User.RequireUniqueEmail = true;
+    options.Lockout.AllowedForNewUsers = true;
+    options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-." +
+    "_@+àáâã´äåºæçè³¿éêëìíîïðñòóôõö÷øùüþÿÀÁÂÃ¥ÄÅªÆÇÈ²¯ÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÜÞß";
 });
-builder.Services.AddDataProtection();
-builder.Services.AddAuthentication("RedPawAuth").AddCookie("RedPawAuth", options =>
+builder.Services.ConfigureApplicationCookie(options => 
 {
-    options.Cookie.Name = "RedPawAuth";
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-}) ;
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
+    options.SlidingExpiration = true;
+});
 
-builder.Services.AddAuthorization(options =>
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
 {
-    options.AddPolicy("AccessChatResources", policy =>
-    {
-        policy.RequireClaim("Role", "User");
-    });   
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(20);
+    options.SlidingExpiration = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SameSite = SameSiteMode.None;
 });
+
+////builder.Services.AddAuthentication("RedPawAuth").
+////    AddCookie("RedPawAuth", options =>
+////{
+////    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+////    options.Cookie.SameSite = SameSiteMode.None;
+////});
+
+
+builder.Services.AddAuthorization();
 
 builder.Services.AddControllers();
 builder.Services.AddTransient<IEmailSender, EmailSender>();
@@ -52,42 +69,49 @@ builder.Services.AddTransient<IDapperContext, DapperContext>();
 builder.Services.AddTransient<ISqlDataAccess, SqlDataAccess>();
 builder.Services.AddTransient<IAdminDataAccess, AdminDataAccess>();
 builder.Services.AddTransient<IUserDataAccess, UserDataAccess>();
-builder.Services.AddCors(options=>
-    options.AddPolicy("AllowSpecificOrigin",
-            builder => builder
-                .AllowAnyOrigin()
-                .AllowAnyHeader()
-                .AllowAnyMethod()
+builder.Services.AddCors(options =>
+    options.AddPolicy("AllowAll",
+            builder => builder.AllowAnyMethod()
+            .AllowAnyHeader()
+            .SetIsOriginAllowed(origin => true)
+            .AllowCredentials()
         ));
 
 var app = builder.Build();
 
+app.UseHttpsRedirection();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
-// Configure the HTTP request pipeline.
+//Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+app.UseSwaggerUI();
 }
+app.UseCors("AllowAll");
 
+//app.UseCookiePolicy();
 
 app.UseAuthentication();
+var cookiePolicyOptions = new CookiePolicyOptions
+{
+    MinimumSameSitePolicy = SameSiteMode.Strict,
+};
+app.UseCookiePolicy(cookiePolicyOptions);
 app.UseAuthorization();
-app.UseHttpsRedirection();
 
-//app.UseCors(builder => builder.AllowAnyOrigin());
-app.UseCors("AllowSpecificOrigin");
-app.MapControllers();
+
 app.UseRouting();
+app.MapControllers();
 app.UseAuthorization();
+
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapControllers();
     //app.MapHub<ChatHub>("/chat");
 });
 
-//app.MapFallbackToFile("/index.html");
+app.MapFallbackToFile("/index.html");
 
 app.Run();

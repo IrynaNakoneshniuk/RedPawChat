@@ -7,9 +7,11 @@ import axios from 'axios';
 import LoginPage from './LoginPage.jsx';
 import ChangePasswordPage from './ChangePasswordPage.jsx';
 import { BrowserRouter as Router } from 'react-router-dom';
+import App from './App.jsx';
+import Test from './Test.jsx'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <Router>
-    <LoginPage/>
+    <RegistrationPage/>
   </Router>,)
 

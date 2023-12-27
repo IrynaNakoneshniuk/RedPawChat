@@ -20,12 +20,7 @@ function App() {
                 </tr>
             </thead>
             <tbody>
-                {forecasts.map(forecast =>
-                    <tr key={forecast.id}>
-                        <td>{forecast.firstname}</td>
-                        
-                    </tr>
-                )}
+                {forecasts}
             </tbody>
         </table>;
 
@@ -33,14 +28,27 @@ function App() {
         <div>
             <h1 id="tabelLabel">Weather forecast</h1>
             <p>This component demonstrates fetching data from the server.</p>
-            {contents}
+          
         </div>
     );
     
     async function populateWeatherData() {
-        const response = await fetch('home');
-        const data = await response.json();
-        setForecasts(data);
+        try {
+            const response = await fetch('https://localhost:5123/api/account/getall', {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    "Content-Type": "application/json",
+                    'Accept': 'application/json', 
+                }
+            });
+        
+            const data = await response.json();
+            console.log(data);
+           
+        } catch (error) {
+            console.error('Error fetching data:', error);
+        }
     }
 }
 

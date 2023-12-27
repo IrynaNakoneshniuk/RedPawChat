@@ -1,12 +1,14 @@
 ﻿using DataAccessRedPaw.UserAccessData;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using RedPaw.Models;
-using RedPawChat.Server.DataAccess.Models;
+using RedPawChat.Server.DataAccess.Models.DTO;
 using RedPawChat.Server.Filters;
-using System.Net.WebSockets;
 using System.Security.Claims;
+using static Dapper.SqlMapper;
 
 
 namespace RedPawChat.Server.Controllers
@@ -27,79 +29,88 @@ namespace RedPawChat.Server.Controllers
         }
 
         [HttpGet]
-        public IActionResult GetAll()
+        [Route("getall")]
+        [Authorize]      
+        public   IActionResult GetAll()
         {
             var cookies=Request.Cookies;
             
-            return Ok();
+            return Ok(new {Message="Вдало"});
         }
        
         [HttpPost]
-        [Route("Register")]
+        [Route("registration")]
         //POST : /api/User/Register
-        public async Task<Object> Register(string email, string userName, string lastName,string middleName,string password,
-            string nickName)
+        public async Task<IActionResult> Register([FromForm] RegistrationModel registrationModel)
         {
+           
             var applicationUser = new User()
             {
-                Email = email,
-                UserName = userName,
-                LastName = lastName,
-                MiddleName = middleName,
-                Password = password,
+                Email = registrationModel.Email,
+                UserName = registrationModel.FirstName,
+                LastName = registrationModel.LastName,
+                MiddleName = registrationModel.MiddleName,
+                Password = registrationModel.Password,
                 CreatedAt = DateTime.UtcNow,
-                NickName = nickName,
-                ImageData = null,
+                NickName = registrationModel.Nickname,
+                ImageData = ConvertIFormFileToByteArray(registrationModel.Photo),
 
             };
 
-            var result = await _userManager.CreateAsync(applicationUser,applicationUser.Password);
-
-            if (result.Succeeded)
+            if (applicationUser != null)
             {
-               
+                var result = await _userManager.CreateAsync(applicationUser, applicationUser.Password);
 
-                var claims = new List<Claim>()
+                if (result.Succeeded)
                 {
-                    new Claim("Email", email),
-                    new Claim("Role","User")
-                };
 
-                var user= await _userDataAccess.FindUserByEmail(email);
-                await _userDataAccess.AddClaimsAsync(user, claims);
-                var identity = new ClaimsIdentity(claims, "RedPawAuth");
-                ClaimsPrincipal claimsPrincipal = new ClaimsPrincipal(identity);
 
-                var resultSignIn=await _signInManager.PasswordSignInAsync(email,password, true, lockoutOnFailure: false);
-                await HttpContext.SignInAsync("RedPawAuth", claimsPrincipal, new AuthenticationProperties { IsPersistent = true });
-                return Ok();
+                    //var claims = new List<Claim>()
+                    //{
+                    //    new Claim("Email",registrationModel.Email),
+                    //    new Claim("Role","User")
+                    //};
+
+                    //var user = await _userDataAccess.FindUserByEmail(registrationModel.Email);
+                    //await _userDataAccess.AddClaimsAsync(user, claims);
+                    //var identity = new ClaimsIdentity(claims, "RedPawAuth");
+                    //ClaimsPrincipal claimsPrincipal = new ClaimsPrincipal(identity);
+
+                    var resultSignIn = await _signInManager.PasswordSignInAsync(registrationModel.Email, registrationModel.Password, true, lockoutOnFailure: false);
+                    //await HttpContext.SignInAsync("RedPawAuth", claimsPrincipal, new AuthenticationProperties { IsPersistent = true });
+                    return Ok();
+                }
+                else
+                {
+                    return BadRequest(new {Error=result.Errors});
+                }
             }
             else
             {
-                return BadRequest();
+                return BadRequest(new { Error = "All fields must be filled" });
             }
         }
 
         [HttpPost]
-        [Route("Login")]
-      
+        [Route("login")]
+       
         public async Task<IActionResult> Login([FromBody] LoginInfo loginModel)
         {
             var resultSignIn = await _signInManager.PasswordSignInAsync(loginModel.Email, loginModel.Password, true, lockoutOnFailure: false);
 
+
             if (resultSignIn.Succeeded)
             {
-                var user = await _userDataAccess.FindUserByEmail(loginModel.Email);
-                var claims = await _userDataAccess.GetClaimsAsync(user.Id);
-                var identity = new ClaimsIdentity(claims,"RedPawAuth");
-                ClaimsPrincipal claimsPrincipal = new ClaimsPrincipal(identity);
-
-                await HttpContext.SignInAsync("RedPawAuth", claimsPrincipal, new AuthenticationProperties { IsPersistent = false });
+                //var user = await _userDataAccess.FindUserByEmail(loginModel.Email);
+                //var claims =  await _userManager.GetClaimsAsync(user);
+                //var identity = new ClaimsIdentity(claims, "RedPawAuth");
+                //ClaimsPrincipal claimsPrincipal = new ClaimsPrincipal(identity);
+                //await HttpContext.SignInAsync("RedPawAuth", claimsPrincipal, new AuthenticationProperties { IsPersistent = true });
 
                 return Ok();
             }
             else
-                return BadRequest(new { message = "Username or password is incorrect." });
+                return BadRequest(new { message = "Username or password is cincorrect." });
         }
 
         [HttpPost("СhangePassword")]
@@ -137,6 +148,20 @@ namespace RedPawChat.Server.Controllers
             }
 
             return BadRequest(ModelState);
+        }
+
+        private byte[] ConvertIFormFileToByteArray(IFormFile file)
+        {
+            if (file != null)
+            {
+                using (MemoryStream memoryStream = new MemoryStream())
+                {
+                    file.CopyTo(memoryStream);
+                    return memoryStream.ToArray();
+                }
+            }
+
+            throw new NullReferenceException();
         }
     }
 

@@ -1,13 +1,13 @@
 ﻿using DataAccessRedPaw.UserAccessData;
 using Microsoft.AspNetCore.Identity;
 using RedPaw.Models;
-using System.Collections;
 using System.Security.Claims;
+
 
 namespace WebApp.Data
 {
     public class UserStore : IUserStore<User>, IUserEmailStore<User>, IUserPhoneNumberStore<User>,
-        IUserTwoFactorStore<User>, IUserPasswordStore<User>, IUserRoleStore<User>,IUserSecurityStampStore<User>
+        IUserTwoFactorStore<User>, IUserPasswordStore<User>, IUserRoleStore<User>,IUserSecurityStampStore<User>,IUserClaimStore<User>
     {
         private readonly IUserDataAccess _userDataAccess;
 
@@ -240,36 +240,36 @@ namespace WebApp.Data
             return await Task.FromResult(user.SecurityStamp);
         }
 
-        //public async Task<IList<Claim>> GetClaimsAsync(User user, CancellationToken cancellationToken)
-        //{
-        //    cancellationToken.ThrowIfCancellationRequested();
-        //    var listClaims = await _userDataAccess.GetClaimsAsync(user);
-        //    user.Claims= listClaims.ToList();
-        //    return user.Claims;
-        //}
+        public async Task<IList<Claim>> GetClaimsAsync(User user, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var listClaims = await _userDataAccess.GetClaimsAsync(user.Id);
+            user.Claims = listClaims.ToList();
+            return user.Claims;
+        }
 
-        //public async Task AddClaimsAsync(User user, IEnumerable<Claim> claims, CancellationToken cancellationToken)
-        //{
-        //    cancellationToken.ThrowIfCancellationRequested();
+        public async Task AddClaimsAsync(User user, IEnumerable<Claim> claims, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
 
-        //    await _userDataAccess.AddClaimsAsync(user, claims);
-        //}
+            await _userDataAccess.AddClaimsAsync(user, claims);
+        }
 
-        //public async Task ReplaceClaimAsync(User user, Claim claim, Claim newClaim, CancellationToken cancellationToken)
-        //{
-        //    cancellationToken.ThrowIfCancellationRequested();
+        public async Task ReplaceClaimAsync(User user, Claim claim, Claim newClaim, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
 
-        //    await _userDataAccess.UpdateUserClaim(user, claim, newClaim);
-        //}
+            await _userDataAccess.UpdateUserClaim(user, claim, newClaim);
+        }
 
-        //public Task RemoveClaimsAsync(User user, IEnumerable<Claim> claims, CancellationToken cancellationToken)
-        //{
-        //    throw new NotImplementedException();
-        //}
+        public Task RemoveClaimsAsync(User user, IEnumerable<Claim> claims, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
 
-        //public Task<IList<User>> GetUsersForClaimAsync(Claim claim, CancellationToken cancellationToken)
-        //{
-        //    throw new NotImplementedException();
-        //}
+        public Task<IList<User>> GetUsersForClaimAsync(Claim claim, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

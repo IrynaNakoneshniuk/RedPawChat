@@ -2,17 +2,25 @@
 import React, { useState } from 'react';
 import {Link} from 'react-router-dom';
 import registrationImage from './assets/logo.svg';
+import App from './App.jsx';
+import ErrorComponent from './ErrorComponent.jsx';
 
-import './App.css';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+} from "react-router-dom";
+
+
 
 const LoginPage = () => {
 
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    rememberMe: false,
-
   });
+
+  const [error, setError] = useState('');
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
@@ -24,22 +32,21 @@ const LoginPage = () => {
 
   const handleLogin = async () => {
     try{
-    const response = await fetch("http://localhost:5123/api/account/Login", {
-      method: "POST", 
-      mode: "cors", 
-      cache: "no-cache", 
-      credentials: "same-origin", 
+    const response = await fetch("https://localhost:5123/api/account/login", {
+      method: "POST",
+      credentials:'include',
       headers: {
         "Content-Type": "application/json",
         'Accept': 'application/json', 
       },
-      redirect: "follow", 
-      referrerPolicy: "no-referrer", 
-      body: JSON.stringify(formData), 
+      body: JSON.stringify(formData),
     });
     console.log(response.statusText);
     if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
+      const errorText = JSON.parse(await response.text());
+        setError(`${errorText.error[0].description}`);
+
+        console.error("Error :", response.status);
     }
   } catch(error) {
 
@@ -69,21 +76,19 @@ const LoginPage = () => {
       />
       <button onClick={handleLogin} formMethod='POST'>Увійти</button>
       <div style={{ display: 'grid', gridTemplateColumns: 'auto auto', gap: '8px'}}>
-      <label>Запам'ятати мене</label>
-      <input 
-          type="checkbox"
-          name="rememberMe"
-          checked={formData.rememberMe}
-          onChange={handleInputChange}
-      />
       </div>
       <p style={{ marginTop: '10px', textAlign: 'center', color: '#fff' }}>
-       <span><Link to="/registration">Зареєструйтесь тут</Link>.</span> 
+       <span><Link to="/getall">Зареєструйтесь тут</Link>.</span> 
       </p>
       <p style={{ textAlign: 'center', color: '#fff' }}>
         Забули пароль? <Link to="/change-password">Скинути пароль</Link>.
+        
       </p>
-      
+      <Routes>
+        {/* Огортаємо ваш компонент App в Route */}
+        <Route path="/getall" element={<App />} />
+      </Routes>
+      <ErrorComponent error={error}/>
     </div>
   );
 };

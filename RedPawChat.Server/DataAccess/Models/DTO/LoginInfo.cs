@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
-namespace RedPawChat.Server.DataAccess.Models
+namespace RedPawChat.Server.DataAccess.Models.DTO
 {
     public class LoginInfo
     {

@@ -1,37 +1,170 @@
 // RegistrationPage.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import registrationImage from './assets/logo.svg'
+import ErrorComponent from './ErrorComponent';
 
 const RegistrationPage = () => {
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [middleName, setMiddleName] = useState('');
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [email, setEmail] = useState('');
-  const [nickname, setNickname] = useState('');
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    confirmPassword: '',
+    firstName: '',
+    lastName: '',
+    middlename:'',
+    nickname: '',
+    photo: null,
+  });
 
-  const handleRegister = async () => {
-    // Викликати API для реєстрації користувача зі введеними даними
-    console.log('Реєстрація: ', { firstName, lastName, middleName, username, password, email, nickname });
+  const [error, setError] = useState('');
+
+  const [emailValid, setEmailValid] = useState(false);
+  const [passwordValid, setPasswordValid] = useState(false);
+  const [confirmPasswordValid, setConfirmPasswordValid] = useState(false);
+
+  useEffect(() => {
+    // Валідація електронної адреси
+    setEmailValid(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email));
+
+    // Валідація паролю (припустимо, що він повинен мати мінімум 6 символів)
+    setPasswordValid(formData.password.length >= 6);
+
+    // Перевірка на співпадіння паролів
+    setConfirmPasswordValid(formData.password === formData.confirmPassword);
+  }, [formData]);
+
+  const handleInputChange = (e) => {
+    const { name, value, type } = e.target;
+
+    // Валідація фото
+    if (name === 'photo' && type === 'file') {
+      const file = e.target.files[0];
+      setFormData((prevData) => ({
+        ...prevData,
+        [name]: file,
+      }));
+    } else {
+      setFormData((prevData) => ({
+        ...prevData,
+        [name]: value,
+      }));
+    }
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const formDataToSend = new FormData();
+    formDataToSend.append('email', formData.email);
+    formDataToSend.append('password', formData.password);
+    formDataToSend.append('confirmPassword', formData.confirmPassword);
+    formDataToSend.append('firstName', formData.firstName);
+    formDataToSend.append('lastName', formData.lastName);
+    formDataToSend.append('middlename', formData.middlename);
+    formDataToSend.append('nickname', formData.nickname);
+    formDataToSend.append('photo', formData.photo);
+
+    try {
+      const response = await fetch('https://localhost:5123/api/account/registration', {
+        method: 'POST',
+        credentials: 'include',
+        body: formDataToSend,
+      });
+
+      console.log(response.statusText);
+      if (!response.ok) {
+        const errorText = JSON.parse(await response.text());
+        setError(`${errorText.error[0].description}`);
+      }
+    } catch (error) {
+      console.error('Error uploading photo:', error);
+    }
+  };
+    
   return (
     <div className="container">
-     <h2 style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+     <h3 style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center'}}>
         <img src={registrationImage} alt="Іконка реєстрації" style={{ width: '80px', height: 'auto', marginRight: '8px' }} />
         Реєстрація
-      </h2>
-      <div  style={{ margin: 'auto',width: '80%', padding: '10px', boxSizing: 'border-box', marginBottom: '10px'}}>
-      <input type="text" placeholder="Ім'я" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
-      <input type="text" placeholder="Прізвище" value={lastName} onChange={(e) => setLastName(e.target.value)} />
-      <input type="text" placeholder="По батькові" value={middleName} onChange={(e) => setMiddleName(e.target.value)} />
-      <input type="text" placeholder="Логін" value={username} onChange={(e) => setUsername(e.target.value)} />
-      <input type="password" placeholder="Пароль" value={password} onChange={(e) => setPassword(e.target.value)} />
-      <input type="email" placeholder="Емейл" value={email} onChange={(e) => setEmail(e.target.value)} />
-      <input type="text" placeholder="Нік" value={nickname} onChange={(e) => setNickname(e.target.value)} />
-      <button onClick={handleRegister}>Зареєструватися</button>
+      </h3>
+      <p></p>
+      <div  style={{ margin: 'auto',width: '80%', boxSizing: 'border-box', marginBottom: '30px'}}>
+      <form onSubmit={handleSubmit}>
+                    
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        className={emailValid ? 'valid' : 'invalid'}
+                        required
+                        placeholder='Електронна пошта'
+                      />
+                      <input
+                        type="password"
+                        name="password"
+                        value={formData.password}
+                        onChange={handleInputChange}
+                        className={passwordValid ? 'valid' : 'invalid'}
+                        required
+                        placeholder='Пароль'
+                      />         
+                      <input
+                        type="password"
+                        name="confirmPassword"
+                        value={formData.confirmPassword}
+                        onChange={handleInputChange}
+                        className={confirmPasswordValid ? 'valid' : 'invalid'}
+                        required
+                        placeholder='Повторіть пароль'
+                      />
+
+                      <input
+                        type="text"
+                        name="firstName"
+                        value={formData.firstName}
+                        onChange={handleInputChange}
+                        required
+                        placeholder='Імя'
+                      />
+                      <input
+                        type="text"
+                        name="lastName"
+                        value={formData.lastName}
+                        onChange={handleInputChange}
+                        required
+                        placeholder='Прізвище'
+                      />
+                      <input
+                        type="text"
+                        name="middlename"
+                        value={formData.middlename}
+                        onChange={handleInputChange}
+                        required
+                        placeholder='По батькові'
+                      />
+                      <input
+                        type="text"
+                        name="nickname"
+                        value={formData.nickname}
+                        onChange={handleInputChange}
+                        required
+                        placeholder='Нік'
+                      />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        name="photo"
+                        onChange={handleInputChange}
+                        required
+                        placeholder='Фото'
+                      />
+                    <button type="submit" disabled={!emailValid || !passwordValid || !confirmPasswordValid}>
+                      Зареєструватися
+                    </button>
+                    
+                  </form>
+                  <ErrorComponent error={error}/>
       </div>
     </div>
   );
