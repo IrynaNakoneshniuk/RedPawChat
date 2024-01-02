@@ -26,7 +26,7 @@ const RegistrationPage = () => {
     // Валідація електронної адреси
     setEmailValid(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email));
 
-    // Валідація паролю (припустимо, що він повинен мати мінімум 6 символів)
+    // Валідація паролю 
     setPasswordValid(formData.password.length >= 6);
 
     // Перевірка на співпадіння паролів
@@ -49,11 +49,14 @@ const RegistrationPage = () => {
         [name]: value,
       }));
     }
+
+    if(!setEmailValid(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))){
+      setError("Uncorrect format of email!")
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     const formDataToSend = new FormData();
     formDataToSend.append('email', formData.email);
     formDataToSend.append('password', formData.password);
@@ -63,6 +66,7 @@ const RegistrationPage = () => {
     formDataToSend.append('middlename', formData.middlename);
     formDataToSend.append('nickname', formData.nickname);
     formDataToSend.append('photo', formData.photo);
+ 
 
     try {
       const response = await fetch('https://localhost:5123/api/account/registration', {

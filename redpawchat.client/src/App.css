@@ -50,4 +50,12 @@ body {
   button:hover {
     background-color: #45a049;
   }
+
+  .scroll-container::-webkit-scrollbar {
+    width: 0.5em;
+  }
+
+  .scroll-container{
+    width:100%;
+  }
   

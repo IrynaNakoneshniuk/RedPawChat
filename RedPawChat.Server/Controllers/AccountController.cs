@@ -97,20 +97,16 @@ namespace RedPawChat.Server.Controllers
         public async Task<IActionResult> Login([FromBody] LoginInfo loginModel)
         {
             var resultSignIn = await _signInManager.PasswordSignInAsync(loginModel.Email, loginModel.Password, true, lockoutOnFailure: false);
-
+          
 
             if (resultSignIn.Succeeded)
             {
-                //var user = await _userDataAccess.FindUserByEmail(loginModel.Email);
-                //var claims =  await _userManager.GetClaimsAsync(user);
-                //var identity = new ClaimsIdentity(claims, "RedPawAuth");
-                //ClaimsPrincipal claimsPrincipal = new ClaimsPrincipal(identity);
-                //await HttpContext.SignInAsync("RedPawAuth", claimsPrincipal, new AuthenticationProperties { IsPersistent = true });
-
-                return Ok();
+                var id = _userManager.GetUserId(User);
+               
+                return Ok(id);
             }
             else
-                return BadRequest(new { message = "Username or password is cincorrect." });
+                return BadRequest(new { Error = "Invalid password or email" });
         }
 
         [HttpPost("СhangePassword")]

@@ -2,16 +2,9 @@
 import React, { useState } from 'react';
 import {Link} from 'react-router-dom';
 import registrationImage from './assets/logo.svg';
-import App from './App.jsx';
+import "./App.css";
 import ErrorComponent from './ErrorComponent.jsx';
-
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-} from "react-router-dom";
-
-
+import { useNavigate } from 'react-router-dom';;
 
 const LoginPage = () => {
 
@@ -21,6 +14,7 @@ const LoginPage = () => {
   });
 
   const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
@@ -42,11 +36,18 @@ const LoginPage = () => {
       body: JSON.stringify(formData),
     });
     console.log(response.statusText);
-    if (!response.ok) {
-      const errorText = JSON.parse(await response.text());
-        setError(`${errorText.error[0].description}`);
+    if (response.ok) {
 
-        console.error("Error :", response.status);
+      var data=await response.json();
+
+      console.log(data);
+      navigate(`/getconversations/${data}`);
+    }
+    else{
+      const errorText = await response.json();
+      setError(`${errorText.error}`);
+
+      console.error("Error :", errorText);
     }
   } catch(error) {
 
@@ -78,16 +79,12 @@ const LoginPage = () => {
       <div style={{ display: 'grid', gridTemplateColumns: 'auto auto', gap: '8px'}}>
       </div>
       <p style={{ marginTop: '10px', textAlign: 'center', color: '#fff' }}>
-       <span><Link to="/getall">Зареєструйтесь тут</Link>.</span> 
+       <span><Link to="/registration">Зареєструйтесь тут</Link>.</span> 
       </p>
       <p style={{ textAlign: 'center', color: '#fff' }}>
         Забули пароль? <Link to="/change-password">Скинути пароль</Link>.
         
       </p>
-      <Routes>
-        {/* Огортаємо ваш компонент App в Route */}
-        <Route path="/getall" element={<App />} />
-      </Routes>
       <ErrorComponent error={error}/>
     </div>
   );

@@ -21,7 +21,7 @@ namespace DataAccessRedPaw.UserAccessData
 
         public async Task<User?> FindUserById(Guid id)
         {
-            var userResult = await _dataAccess.LoadData<User,dynamic>("spFindByIdAsync",new {Id= id });
+            var userResult = await _dataAccess.LoadData<User,dynamic>("spFindByIdAsync",new {Id= id.ToString().ToLower() });
 
             return userResult.FirstOrDefault();
         }

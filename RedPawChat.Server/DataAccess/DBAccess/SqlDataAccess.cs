@@ -135,7 +135,7 @@ namespace DBAccess.DBAccess
             try
             {
               // Parameters to pass to the stored procedure
-                 var parameters = new { UserId = user.Id.ToString() };
+                 var parameters = new { UserId = user.Id.ToString().ToLower() };
 
               // Calls the stored procedure and retrieves the results
                 using var results = await connection.QueryMultipleAsync(storedProcedure, parameters, 

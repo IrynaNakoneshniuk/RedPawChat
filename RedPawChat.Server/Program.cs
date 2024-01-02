@@ -108,7 +108,12 @@ app.UseAuthorization();
 
 app.UseEndpoints(endpoints =>
 {
-    endpoints.MapControllers();
+
+    endpoints.MapControllerRoute(
+        name: "default",
+        pattern: "{controller}/{action}/{id?}",
+        defaults: new { controller = "Account", action = "Login" }
+    );
     //app.MapHub<ChatHub>("/chat");
 });
 
