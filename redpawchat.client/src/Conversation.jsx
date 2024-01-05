@@ -6,10 +6,10 @@ const Conversation = (props) => {
 
   console.log(props);
 
-  const containerStyle = {
-    // Рамка для зони списку
-    height: '700px',          // Фіксована висота
-    overflowY: 'auto',        
+  const containerStyle = {   
+    backgraund:'#333',
+    overflowY: 'auto',
+    height: '80vh',
   };
 
   const openSocket= ()=>{
@@ -77,10 +77,10 @@ const Conversation = (props) => {
   };
 
   return (
-    <div className='scroll-container' style={containerStyle}>
+    <div  >
        <ul style={{listStyleType:'none'}}>
-      <div>
-        {props.conversation.messages.map((message) => (
+      <div className='scroll-container' style={containerStyle}>
+        {props.click&&props.conversation.messages.map((message) => (
           <li key={message.id} style={{listStyleType:'none'}}>
           <Message photo={message.photo} userName={message.userName} 
           text={message.text} createdAt={message.createdAt} />
@@ -94,7 +94,6 @@ const Conversation = (props) => {
         value={newMessage}
         onChange={(e) => setNewMessage(e.target.value)}
       />
-      <button onClick={handleSendMessage}>Відправити</button>
     </div>
   );
 };

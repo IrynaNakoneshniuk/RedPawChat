@@ -35,7 +35,7 @@ const LoginPage = () => {
       },
       body: JSON.stringify(formData),
     });
-    console.log(response.statusText);
+
     if (response.ok) {
 
       var data=await response.json();

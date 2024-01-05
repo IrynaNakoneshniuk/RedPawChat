@@ -22,43 +22,86 @@ namespace RedPawChat.Server.Controllers
         [HttpGet]
         [Route("getconversations/{id?}")]
         public async Task<IActionResult> GetConversations(string id)
-       {
-           User ? user= await _dataAccess.FindUserById(new Guid(id));
-           await _dataAccess.GetConversationInfo(user);
-
-            var conversations = user.Conversations;
-            UserDTO userDTO = new UserDTO();
-            userDTO.Email = user.Email;
-            userDTO.IsOnline = 1;
-            userDTO.Photo = user.ImageData;
-            userDTO.Name = user.UserName;
-            userDTO.Nick = user.NickName;
-
-            foreach (Conversations conversation in conversations)
+        {
+            try
             {
-                ConversationDTO conversationDTO = new ConversationDTO();
-                foreach (Messages message in conversation.Messages)
+                if (string.IsNullOrEmpty(id))
+                    return BadRequest();
+
+                User? user = await _dataAccess.FindUserById(new Guid(id));
+                if (user == null)
+                    return NotFound();
+
+                await _dataAccess.GetConversationInfo(user);
+
+                var userDTO = await MapUserToUserDTOAsync(user);
+
+                return Ok(userDTO);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        private async Task<UserDTO> MapUserToUserDTOAsync(User user)
+        {
+            var userDTO = new UserDTO
+            {
+                Id= user.Id,    
+                Email = user.Email,
+                IsOnline = 1,
+                Photo = user.ImageData,
+                Name = user.UserName,
+                Nick = user.NickName,
+                Conversation = await MapConversationsAsync(user.Conversations),
+            };
+
+            return userDTO;
+        }
+
+        private async Task<List<ConversationDTO>> MapConversationsAsync(IEnumerable<Conversations> conversations)
+        {
+            var conversationDTOs = new List<ConversationDTO>();
+
+            foreach (var conversation in conversations)
+            {
+                var conversationDTO = new ConversationDTO
                 {
-                    MessagesDTO messagesDTO = new MessagesDTO();
-                    messagesDTO.UserId = message.UserId;
-                    messagesDTO.Text = message.Text;
-                    var userInfo = await _dataAccess.FindUserById(message.UserId);
-                    messagesDTO.UserName = userInfo.UserName;
-                    messagesDTO.Photo = userInfo.ImageData;
-                    messagesDTO.ConversationId = conversation.Id;
-                    messagesDTO.CreatedAt = message.CreatedAt;
-                    messagesDTO.Id=message.Id;
+                    Id = conversation.Id,
+                    Title = conversation.Title,
+                    Messages = await MapMessagesAsync(conversation.Messages)
+                };
 
-                    conversationDTO.Messages.Add(messagesDTO);
-                   
-                }
-                conversationDTO.Title = conversation.Title;
-                conversationDTO.Id = conversation.Id;
-
-               userDTO.Conversation.Add(conversationDTO);
+                conversationDTOs.Add(conversationDTO);
             }
 
-            return Ok(userDTO);
+            return conversationDTOs;
+        }
+
+        private async Task<List<MessagesDTO>> MapMessagesAsync(IEnumerable<Messages> messages)
+        {
+            var messagesDTOs = new List<MessagesDTO>();
+
+            foreach (var message in messages)
+            {
+                var userInfo = await _dataAccess.FindUserById(message.UserId);
+
+                var messagesDTO = new MessagesDTO
+                {
+                    Id = message.Id,
+                    UserId = message.UserId,
+                    Text = message.Text,
+                    UserName = userInfo?.UserName,
+                    Photo = userInfo?.ImageData,
+                    ConversationId = message.ConversationId,
+                    CreatedAt = message.CreatedAt
+                };
+
+                messagesDTOs.Add(messagesDTO);
+            }
+
+            return messagesDTOs;
         }
     }
 }

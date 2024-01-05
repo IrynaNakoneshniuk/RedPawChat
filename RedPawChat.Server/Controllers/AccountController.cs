@@ -101,9 +101,9 @@ namespace RedPawChat.Server.Controllers
 
             if (resultSignIn.Succeeded)
             {
-                var id = _userManager.GetUserId(User);
+                var user = await _userDataAccess.FindUserByEmail(loginModel.Email);
                
-                return Ok(id);
+                return Ok(user.Id);
             }
             else
                 return BadRequest(new { Error = "Invalid password or email" });

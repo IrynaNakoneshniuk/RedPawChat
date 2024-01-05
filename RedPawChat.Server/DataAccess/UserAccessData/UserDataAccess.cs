@@ -146,6 +146,11 @@ namespace DataAccessRedPaw.UserAccessData
             await _dataAccess.GetContactInfo("spGetAllData", user);
         }
 
+        public async Task<IEnumerable<User>> GetContactsInfo(Guid id)
+        {
+            return await _dataAccess.LoadData<User,dynamic>("spGetContactsInfo", new {UserId=id});
+        }
+
         // Retrieves conversation information for a user.
         // This method utilizes the data access layer to fetch conversation information for a given user using the spGetConversations stored procedure.
         public async Task GetConversationInfo(User user)
@@ -178,9 +183,9 @@ namespace DataAccessRedPaw.UserAccessData
 
         // Adds a user to contacts.
         // This method utilizes the data access layer to add a user to contacts using the spAddUserToContacts stored procedure.
-        public async Task AddUserToContacts(Guid userId, User user)
+        public async Task AddUserToContacts(Guid userId, Guid contactId)
         {
-            await _dataAccess.SaveData<dynamic>("spAddUserToContacts", new { UserId = userId, ContactId = user.Id });
+            await _dataAccess.SaveData<dynamic>("spAddUserToContacts", new { UserId = userId, ContactId = contactId });
         }
 
         // Adds a user to the blacklist.
@@ -192,9 +197,9 @@ namespace DataAccessRedPaw.UserAccessData
 
         // Deletes a user from contacts.
         // This method leverages the data access layer to delete a user from contacts using the spDeleteFromContacts stored procedure.
-        public async Task DeleteFromContacts(Guid userId, User user)
+        public async Task DeleteFromContacts(Guid userId, Guid contactId)
         {
-            await _dataAccess.SaveData<dynamic>("spDeleteFromContacts", new { ContactId = user.Id, UserId = userId });
+            await _dataAccess.SaveData<dynamic>("spDeleteFromContacts", new { ContactId = contactId, UserId = userId });
         }
 
         // Finds contacts by nickname.

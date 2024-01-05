@@ -1,80 +1,100 @@
 import React, { useState, useEffect } from 'react';
+import './App.css';
+import ContactsItem from './ContactsItem';
+import UsersContacts from './UsersContacts';
+import { useParams } from 'react-router-dom';
 
 const Contacts = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [error, setError] = useState('');
   const [searchResults, setSearchResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [contacts, setContacts]=useState(null);
+ 
+  const { id } = useParams();
 
-  useEffect(() => {
-    // Запит до сервера за списком користувачів
-    const fetchData = async () => {
-      const users = await searchUsers(searchTerm);
-      setSearchResults(users);
-    };
-    const simulateDelay = (milliseconds) => new Promise(resolve => setTimeout(resolve, milliseconds));
 
-    // Список усіх користувачів (симулюємо базу даних)
-    const allUsers = [
-      { id: 1, username: 'user1' },
-      { id: 2, username: 'user2' },
-      { id: 3, username: 'user3' },
-      // Додайте більше користувачів за потребою
-    ];
-    
-    // Симулювання функції пошуку користувачів
-    const searchUsers = async (searchTerm) => {
-      await simulateDelay(500); // Симулювати затримку
-      const filteredUsers = allUsers.filter(user =>
-        user.username.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      return filteredUsers;
-    };
-    
-    // Симулювання функції додавання контакту
-    const addContact = async (userId) => {
-      await simulateDelay(500); // Симулювати затримку
-      // Логіка для додавання контакту на сервері (не симульовано в цьому прикладі)
-      console.log(`Added user with ID ${userId} to contacts.`);
-    };
-    
-    // Симулювання функції блокування користувача
-    const blockUser = async (userId) => {
-      await simulateDelay(500); // Симулювати затримку
-      // Логіка для блокування користувача на сервері (не симульовано в цьому прикладі)
-      console.log(`Blocked user with ID ${userId}.`);
-    };
-    
-    fetchData();
-  }, [searchTerm]); // Запускати ефект при зміні searchTerm
+ const handleEnterPress= async ()=>{
+  try{
+    setLoading(true);
+    const response= await fetch("https://localhost:5123/api/contacts/search",{
+      method:'POST',
+      credentials:'include',
+      headers: {
+        "Content-Type": "application/json",
+        'Accept': 'application/json', 
+      },
 
-  const handleAddContact = (userId) => {
-    addContact(userId);
-    // Оновити список контактів
+      body:JSON.stringify(searchTerm),
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch data');
+    }
+
+    const data = await response.json();
+    setSearchResults(data);
+  } catch (error) {
+    setError(error.message || 'Something went wrong');
+  } finally {
+    setLoading(false);
+  }
+}
+
+  const getContactsInfo= async ()=>{
+
+    try{
+      setLoading(true);
+      console.log('getContactsInfo');
+      const response= await fetch(`https://localhost:5123/api/contacts/getcontacts/${id}`,{
+        method:'GET',
+        credentials:'include',
+        headers: {
+          "Content-Type": "application/json",
+          'Accept': 'application/json', 
+        },
+      })
+  
+      if (response.ok) {
+        const data = await response.json();
+        setContacts(data);
+        console.log(data);
+      }
+  
+    } catch (error) {
+      setError(error.message || 'Something went wrong');
+    } finally {
+      setLoading(false);
+    }
+
+ };
+
+    
+     useEffect(()=>{
+     getContactsInfo();
+     }, [searchTerm]);
+  
+
+  const handleEdit = () => {
+    console.log('Edit clicked');
   };
 
-  const handleBlockUser = (userId) => {
-    blockUser(userId);
-    // Оновити список контактів
-  };
+  
 
   return (
     <div>
-      <h2>Contacts</h2>
-      <input
+      <input style={{padding:'15px', marginLeft:'25px'}}
         type="text"
         placeholder="Search users"
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
+        onKeyDown={handleEnterPress}
       />
-      <ul>
-        {searchResults.map((user) => (
-          <li key={user.id}>
-            {user.username}
-            <button onClick={() => handleAddContact(user.id)}>Add Contact</button>
-            <button onClick={() => handleBlockUser(user.id)}>Block User</button>
-          </li>
-        ))}
-      </ul>
-      {/* Додайте список існуючих контактів користувача */}
+      <div style={{ margin: '0 0 0 20px' }}>
+      {loading && <p>Loading...</p>}
+      {searchTerm&&searchResults&&<ContactsItem contacts={searchResults}/>}
+      {contacts&&<UsersContacts contacts={contacts}/>}
+    </div>
     </div>
   );
 };

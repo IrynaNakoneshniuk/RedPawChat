@@ -6,11 +6,11 @@ namespace DataAccessRedPaw.UserAccessData
     public interface IUserDataAccess
     {
         Task AddUserToBlackList(Guid userId, User user);
-        Task AddUserToContacts(Guid userId, User user);
+        Task AddUserToContacts(Guid userId, Guid contactId);
         Task ChangePassword(string password, string id);
         Task ChangePhotoProfile(string id, byte[] newPhoto);
         Task CreateMessage(Messages message);
-        Task DeleteFromContacts(Guid userId, User user);
+        Task DeleteFromContacts(Guid userId, Guid contactId);
         Task DeleteMessages(Guid messageId);
         Task<IEnumerable<User>?> FindContactByNickName(string nickName);
         Task GetConversationInfo(User user);
@@ -31,7 +31,7 @@ namespace DataAccessRedPaw.UserAccessData
         Task<string?> GetSecurityStamp(User user);
         Task<IEnumerable<Claim>> GetClaimsAsync(Guid userId);
         Task AddClaimsAsync(User user, IEnumerable<Claim> claims);
-
+        Task<IEnumerable<User>> GetContactsInfo(Guid id);
         Task UpdateUserClaim(User user, Claim claim, Claim newClaim);
     }
 }

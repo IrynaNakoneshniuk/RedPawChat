@@ -49,14 +49,6 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     options.Cookie.SameSite = SameSiteMode.None;
 });
 
-////builder.Services.AddAuthentication("RedPawAuth").
-////    AddCookie("RedPawAuth", options =>
-////{
-////    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-////    options.Cookie.SameSite = SameSiteMode.None;
-////});
-
-
 builder.Services.AddAuthorization();
 
 builder.Services.AddControllers();
@@ -91,7 +83,6 @@ app.UseSwaggerUI();
 }
 app.UseCors("AllowAll");
 
-//app.UseCookiePolicy();
 
 app.UseAuthentication();
 var cookiePolicyOptions = new CookiePolicyOptions

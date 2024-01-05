@@ -22,11 +22,12 @@ const Message = (props) => {
             style={{ width: '100%', height: '100%', objectFit: 'cover'}}
           />
               </div>)}
-              <div style={{background:'#333',textAlign:'center',borderRadius:'20px',margin:'15px',padding:'20px'}}>
-            <p style={{color:'#E3651D'}}>{props.userName}</p>
+              <div style={{background:'#636e72',textAlign:'center',borderRadius:'20px',margin:'15px',padding:'20px'}}>
+            
             <p>{props.text}</p>
             <p style={{fontSize:'8px'}}>{currentDate}</p>
             </div>
+            
       </div>
             
               

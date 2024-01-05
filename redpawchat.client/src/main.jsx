@@ -10,14 +10,14 @@ import App from './App.jsx';
 import Test from './Test.jsx'
 import Profile from './Profile.jsx'
 import { Provider } from 'react-redux'
-import { UserProvider } from './UserContext';
+// import { UserProvider } from './UserContext';
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
-     <UserProvider>
+     {/* <UserProvider> */}
      <App/>
-     </UserProvider>
+     {/* </UserProvider> */}
   </React.StrictMode>
 );
 

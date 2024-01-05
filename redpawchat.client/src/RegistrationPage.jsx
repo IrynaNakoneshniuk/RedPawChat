@@ -24,8 +24,7 @@ const RegistrationPage = () => {
 
   useEffect(() => {
     // Валідація електронної адреси
-    setEmailValid(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email));
-
+    setEmailValid(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/.test(formData.email))
     // Валідація паролю 
     setPasswordValid(formData.password.length >= 6);
 
@@ -48,10 +47,6 @@ const RegistrationPage = () => {
         ...prevData,
         [name]: value,
       }));
-    }
-
-    if(!setEmailValid(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))){
-      setError("Uncorrect format of email!")
     }
   };
 
