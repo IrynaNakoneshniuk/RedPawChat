@@ -2,8 +2,12 @@ import React from 'react';
 import './App.css';
 import { useParams } from 'react-router-dom';
 
+import Conversation from './Conversation';
+
+
 const UsersContacts = (props) => {
   const { id } = useParams();
+  
 
 const removeHandler= async (contactid)=>{
 
@@ -23,7 +27,9 @@ const removeHandler= async (contactid)=>{
     });
     
     if(responce.ok){
-      
+      const data =responce.json();
+      navigate(<Conversation id ={data}/>)
+
     }
   } catch (error) {
     console.error('Error adding contact:', error);
@@ -31,6 +37,32 @@ const removeHandler= async (contactid)=>{
 
 }
 
+const createConversationHandler= async (contactid)=>{
+
+  try {
+    
+    console.log(`${id},${contactid}`);
+
+    const responce= await fetch("https://localhost:5123/api/conversations/createnewconversation",{
+      method:'POST',
+      credentials:'include',
+      headers: {
+        "Content-Type": "application/json",
+        'Accept': 'application/json', 
+      },
+    
+      body:JSON.stringify(`${id},${contactid}`),
+    });
+    
+    if(responce.ok){
+      const data= await responce.json();
+      
+    }
+  } catch (error) {
+    console.error('Error adding contact:', error);
+  }
+
+}
 
   return (
     <div className='scroll-container' style={{ display: 'flex',flexDirection:'row',alignItems:'center',
@@ -51,7 +83,7 @@ const removeHandler= async (contactid)=>{
        {contact.name &&(<span  style={{display:'block'}}>{contact.name}</span>)}
       </div>
         <button onClick={()=>{removeHandler(contact.id)}}  style={{height:'50px', marginTop:'20px', marginLeft:'5px'}}>Видалити</button>
-        <button  style={{background:'#e67e22', height:'50px',marginTop:'20px'}}>Повідомлення</button>
+        <button onClick={()=>{createConversationHandler(contact.id)}} style={{background:'#e67e22', height:'50px',marginTop:'20px'}}>Повідомлення</button>
           </li>
         ))}
       </ul>

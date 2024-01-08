@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Net;
 using Microsoft.AspNetCore.Builder;
 using RedPawChat.Server.DataAccess.Models.DTO;
+using RedPawChat.Server;
+using System;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -56,7 +58,7 @@ builder.Services.AddTransient<IEmailSender, EmailSender>();
 builder.Services.Configure<AuthMessageSenderOptions>(builder.Configuration);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-//builder.Services.AddSignalR().AddAzureSignalR();
+builder.Services.AddSignalR();
 builder.Services.AddTransient<IDapperContext, DapperContext>();
 builder.Services.AddTransient<ISqlDataAccess, SqlDataAccess>();
 builder.Services.AddTransient<IAdminDataAccess, AdminDataAccess>();
@@ -97,6 +99,7 @@ app.UseRouting();
 app.MapControllers();
 app.UseAuthorization();
 
+
 app.UseEndpoints(endpoints =>
 {
 
@@ -105,8 +108,10 @@ app.UseEndpoints(endpoints =>
         pattern: "{controller}/{action}/{id?}",
         defaults: new { controller = "Account", action = "Login" }
     );
-    //app.MapHub<ChatHub>("/chat");
+
+    endpoints.MapHub<ChatHub>("/chathub");
 });
+
 
 app.MapFallbackToFile("/index.html");
 

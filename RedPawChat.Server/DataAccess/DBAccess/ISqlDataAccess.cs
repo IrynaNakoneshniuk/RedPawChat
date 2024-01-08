@@ -11,5 +11,6 @@ namespace DBAccess.DBAccess
         Task GetConversationsInfo(string storedProcedure, User user);
         Task<int?> GetScalarValue(string storedProcedure, User user, string roleName);
         Task SaveClaimsListAtDb(string storedProcedure, Guid userId, IEnumerable<Claim> claims);
+        Task<Conversations> GetConversationById(string storedProcedure, Guid idUser, Guid conversationId);
     }
 }

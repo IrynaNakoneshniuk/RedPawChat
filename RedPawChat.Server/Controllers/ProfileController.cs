@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RedPaw.Models;
 using RedPawChat.Server.DataAccess.Models.DTO;
+using System.Collections.Generic;
+using System.Reflection.Metadata.Ecma335;
 
 namespace RedPawChat.Server.Controllers
 {
@@ -70,7 +72,8 @@ namespace RedPawChat.Server.Controllers
                 {
                     Id = conversation.Id,
                     Title = conversation.Title,
-                    Messages = await MapMessagesAsync(conversation.Messages)
+                    Messages = await MapMessagesAsync(conversation.Messages),
+                    Members= await MapMembersGroup(conversation.Id)
                 };
 
                 conversationDTOs.Add(conversationDTO);
@@ -103,5 +106,30 @@ namespace RedPawChat.Server.Controllers
 
             return messagesDTOs;
         }
+
+        private async Task<List<MembersConversationDTO>> MapMembersGroup(Guid idConversation)
+        {
+           List < MembersConversationDTO > members= new List<MembersConversationDTO>();
+
+            var users = await _dataAccess.GetConversationMembers(idConversation);
+
+            foreach (var member in users)
+            {
+                MembersConversationDTO user = new MembersConversationDTO()
+                {
+                    Id = member.Id,
+                    UserName = member.UserName,
+                    Photo = member.ImageData,
+                    IsBlocked = member.IsBlocked,
+                    ConversationId=idConversation
+                };
+
+                members.Add(user);
+            }
+
+            return members; 
+        }
+
+      
     }
 }

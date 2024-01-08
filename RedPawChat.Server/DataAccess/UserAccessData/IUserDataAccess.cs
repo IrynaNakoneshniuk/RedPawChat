@@ -33,5 +33,13 @@ namespace DataAccessRedPaw.UserAccessData
         Task AddClaimsAsync(User user, IEnumerable<Claim> claims);
         Task<IEnumerable<User>> GetContactsInfo(Guid id);
         Task UpdateUserClaim(User user, Claim claim, Claim newClaim);
+
+        Task<Guid> CreateConversation(Guid userId, Guid contactId);
+
+        Task RemoveConversation(Guid conversationId);
+
+        Task<IEnumerable<User>> GetConversationMembers(Guid conversationId);
+        Task AddMembers(Guid conversationId, Guid contactid);
+        Task<Conversations> GetConversationById(Guid conversationId, Guid userId);
     }
 }

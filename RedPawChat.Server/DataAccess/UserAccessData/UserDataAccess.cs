@@ -1,9 +1,11 @@
-﻿using DBAccess.DBAccess;
+﻿using Dapper;
+using DBAccess.DBAccess;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Identity.Client;
 using RedPaw.Models;
 using RedPawChat.Server.DataAccess.Models.DTO;
 using System;
+using System.Data;
 using System.Security.Claims;
 
 namespace DataAccessRedPaw.UserAccessData
@@ -21,14 +23,14 @@ namespace DataAccessRedPaw.UserAccessData
 
         public async Task<User?> FindUserById(Guid id)
         {
-            var userResult = await _dataAccess.LoadData<User,dynamic>("spFindByIdAsync",new {Id= id.ToString().ToLower() });
+            var userResult = await _dataAccess.LoadData<User, dynamic>("spFindByIdAsync", new { Id = id.ToString().ToLower() });
 
             return userResult.FirstOrDefault();
         }
 
         public async Task DeleteUserById(User user)
         {
-            await _dataAccess.SaveData<dynamic>("spDeleteUser",new {Id=user.Id});
+            await _dataAccess.SaveData<dynamic>("spDeleteUser", new { Id = user.Id });
         }
 
         // Registers a new user in the system.
@@ -50,11 +52,11 @@ namespace DataAccessRedPaw.UserAccessData
                 NormalizedEmail = user.Email.ToUpper(),
                 PasswordHash = user.PasswordHash,
                 TwoFactorEnabled = user.TwoFactorEnabled,
-                SecurityStamp=user.SecurityStamp,
+                SecurityStamp = user.SecurityStamp,
                 ConcurrencyStamp = user.ConcurrencyStamp,
-                EmailConfirmed=user.EmailConfirmed,
-                AccessFailedCount=user.AccessFailedCount,
-                LockoutEnabled=user.LockoutEnabled,
+                EmailConfirmed = user.EmailConfirmed,
+                AccessFailedCount = user.AccessFailedCount,
+                LockoutEnabled = user.LockoutEnabled,
 
             });
         }
@@ -74,7 +76,7 @@ namespace DataAccessRedPaw.UserAccessData
 
         public async Task<User?> SignInUser(string email, string password)
         {
-          var user=  await UserAuthentication(email, password);
+            var user = await UserAuthentication(email, password);
 
             if (user != null)
             {
@@ -108,10 +110,10 @@ namespace DataAccessRedPaw.UserAccessData
                 UserName = user.UserName,
                 LastName = user.LastName,
                 MiddleName = user.MiddleName,
-                Password=user.Password,
-                PasswordHash= user.PasswordHash,
-                SecurityStamp= user.SecurityStamp,
-                ConcurrencyStamp=user.ConcurrencyStamp,
+                Password = user.Password,
+                PasswordHash = user.PasswordHash,
+                SecurityStamp = user.SecurityStamp,
+                ConcurrencyStamp = user.ConcurrencyStamp,
             });
         }
 
@@ -148,7 +150,7 @@ namespace DataAccessRedPaw.UserAccessData
 
         public async Task<IEnumerable<User>> GetContactsInfo(Guid id)
         {
-            return await _dataAccess.LoadData<User,dynamic>("spGetContactsInfo", new {UserId=id});
+            return await _dataAccess.LoadData<User, dynamic>("spGetContactsInfo", new { UserId = id });
         }
 
         // Retrieves conversation information for a user.
@@ -212,7 +214,7 @@ namespace DataAccessRedPaw.UserAccessData
         public async Task<IEnumerable<User?>> FindUserByName(string name)
         {
             return await _dataAccess.LoadData<User, dynamic>("spFindUserByName", new { NormalizeName = name.ToUpper() });
-            
+
         }
 
         public async Task<int?> IsInRoleUser(User user, string roleName)
@@ -227,12 +229,12 @@ namespace DataAccessRedPaw.UserAccessData
 
         public async Task<IEnumerable<User?>> GetUsersInRoleAsync(string roleName)
         {
-            return await _dataAccess.LoadData<User,dynamic>("spGetUsersInRoleAsync", new { RoleName = roleName.ToUpper()}); 
+            return await _dataAccess.LoadData<User, dynamic>("spGetUsersInRoleAsync", new { RoleName = roleName.ToUpper() });
         }
 
         public async Task AddToRoleAsync(User user, string roleName)
         {
-            await _dataAccess.SaveData("spAddToRole", new { Id =user.Id, RoleNameNormalize = roleName.ToUpper()});
+            await _dataAccess.SaveData("spAddToRole", new { Id = user.Id, RoleNameNormalize = roleName.ToUpper() });
         }
 
         public async Task RemoveFromRole(User user, string roleName)
@@ -242,20 +244,20 @@ namespace DataAccessRedPaw.UserAccessData
 
         public async Task<string?> GetSecurityStamp(User user)
         {
-           var res= await _dataAccess.LoadData<string?, dynamic>("spGetSecurityStamp", new { IdUser = user.Id });
+            var res = await _dataAccess.LoadData<string?, dynamic>("spGetSecurityStamp", new { IdUser = user.Id });
             return res.FirstOrDefault();
         }
 
         public async Task<IEnumerable<Claim>> GetClaimsAsync(Guid userId)
         {
-            var listClaims= await _dataAccess.LoadData<UserClaimDto, dynamic>("spGetUserClaims", new { UserId = userId });
+            var listClaims = await _dataAccess.LoadData<UserClaimDto, dynamic>("spGetUserClaims", new { UserId = userId });
 
             return listClaims.Select(r => new Claim(r.ClaimType, r.ClaimValue)).ToList();
         }
 
         public async Task AddClaimsAsync(User user, IEnumerable<Claim> claims)
         {
-             await _dataAccess.SaveClaimsListAtDb("spAddUserClaim",user.Id,claims);   
+            await _dataAccess.SaveClaimsListAtDb("spAddUserClaim", user.Id, claims);
         }
 
         public async Task UpdateUserClaim(User user, Claim claim, Claim newClaim)
@@ -268,6 +270,43 @@ namespace DataAccessRedPaw.UserAccessData
                 ClaimType = claim.Value,
                 ClaimValue = claim.Value
             });
+        }
+
+        public async Task<Guid> CreateConversation(Guid userId, Guid contactId)
+        {
+            var parameters = new DynamicParameters();
+            parameters.Add("@UserId", userId, DbType.Guid);
+            parameters.Add("@ContactId", contactId, DbType.Guid);
+            parameters.Add("@ConversationID", dbType: DbType.Guid, direction: ParameterDirection.Output);
+
+            await _dataAccess.SaveData<dynamic>("spCreateConversation", parameters);
+
+            Guid conversationId = parameters.Get<Guid>("@ConversationID");
+
+            return conversationId;
+
+        }
+
+        public async Task RemoveConversation(Guid conversationId)
+        {
+            await _dataAccess.SaveData<dynamic>("spRemoveConversation", new { ConversationID = conversationId });
+        }
+
+        public async Task<IEnumerable<User>> GetConversationMembers(Guid conversationId){
+
+            return await _dataAccess.LoadData<User, dynamic>("spGetMembersConversation", new {ConversationID=conversationId});
+        }
+
+        public async Task AddMembers(Guid conversationId,Guid contactid)
+        {
+            await _dataAccess.SaveData<dynamic>("spAddMemberToConversation",new { ConversationId =conversationId, ContactId = contactid});
+        }
+
+        public async Task<Conversations> GetConversationById(Guid conversationId,Guid userId)
+        {
+            Conversations conversations= await _dataAccess.GetConversationById("spGetConversation", userId, conversationId);
+
+            return conversations;
         }
     }
 }

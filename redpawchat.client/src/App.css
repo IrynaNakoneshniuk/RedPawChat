@@ -40,7 +40,6 @@ body {
   button {
     width: 90%;
     padding: 10px;
-    background-color: #4caf50;
     color: #fff;
     border: none;
     border-radius: 4px;
@@ -49,6 +48,10 @@ body {
   
   button:hover {
     background-color: #45a049;
+  }
+
+  li:hover {
+    background-color:#333;
   }
 
   .scroll-container::-webkit-scrollbar {

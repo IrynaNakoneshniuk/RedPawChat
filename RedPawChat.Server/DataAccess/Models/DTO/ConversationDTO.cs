@@ -7,5 +7,7 @@ namespace RedPawChat.Server.DataAccess.Models.DTO
         public Guid Id { get; set; }
         public string Title { get; set; }
         public List<MessagesDTO> Messages { get; set; }=new List<MessagesDTO>();
+
+        public List<MembersConversationDTO> Members { get; set; }= new List<MembersConversationDTO> { };
     }
 }

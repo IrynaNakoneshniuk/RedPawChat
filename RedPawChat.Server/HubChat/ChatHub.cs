@@ -5,9 +5,10 @@ namespace RedPawChat.Server
 {
     public class ChatHub :Hub
     {
-        public async Task SendMessage(Guid conversationId, string userName, string message)
+        public async Task SendMessage(string conversationId, string userName, string message)
         {
-            await Clients.Group(conversationId.ToString()).SendAsync("ReceiveMessage", userName, message);
+            await Groups.AddToGroupAsync(Context.ConnectionId, conversationId.ToString());
+            await Clients.Group(conversationId.ToString()).SendAsync("SendMessage", conversationId, userName, message);
         }
 
         public async Task JoinDialog(string dialogId, string userName)
@@ -17,7 +18,7 @@ namespace RedPawChat.Server
             await Clients.Group(dialogId).SendAsync("UserJoined", userName);
         }
 
-        public async Task LeaveDialog(string userName, Guid dialogId )
+        public async Task LeaveDialog(string userName,string dialogId )
         {
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, dialogId.ToString());
 

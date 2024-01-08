@@ -3,6 +3,7 @@ using System.Data;
 using RedPaw.Models;
 using RedPawChat.Server.DataAccess.DapperContext;
 using System.Security.Claims;
+using Microsoft.VisualBasic;
 
 namespace DBAccess.DBAccess
 {
@@ -120,6 +121,8 @@ namespace DBAccess.DBAccess
         }
 
 
+
+
         /// <summary>
         /// Retrieves information about conversations and messages for a user.
         /// </summary>
@@ -159,6 +162,43 @@ namespace DBAccess.DBAccess
                 }
             }
             catch(Exception ex )
+            {
+                Console.WriteLine(ex.Message);
+
+                throw;
+            }
+        }
+
+        public async Task<Conversations> GetConversationById(string storedProcedure, Guid idUser,Guid conversationId)
+        {
+            // Establishes a connection to the database
+            using IDbConnection connection = _context.CreateConnection();
+            Conversations conversation= new Conversations();
+            try
+            {
+                // Parameters to pass to the stored procedure
+                var parameters = new { ConversationId = conversationId, UserId= idUser };
+
+                // Calls the stored procedure and retrieves the results
+                using var results = await connection.QueryMultipleAsync(storedProcedure, parameters,
+                    commandType: CommandType.StoredProcedure);
+
+                // Checks if there are results
+                if (results is not null)
+                {
+                    // Retrieves and converts the list of conversations to a collection
+                    conversation = (await results.ReadAsync<Conversations>()).ToList()?.FirstOrDefault();
+                    var messagesList = (await results.ReadAsync<Messages>()).ToList();
+
+                    conversation.Messages = messagesList
+                    // Selects messages that belong to the current conversation
+                             .Where(msg => msg.ConversationId == conversation.Id)
+                             .ToList();
+                }
+
+                return conversation;
+            }
+            catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
 

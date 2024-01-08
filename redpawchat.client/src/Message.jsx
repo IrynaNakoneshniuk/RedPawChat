@@ -5,7 +5,7 @@ const Message = (props) => {
   const currentDate=new Date(props.createdAt).toLocaleString();
 
    return (
-    <div style={{display:'flex', alignItems:'center'}}>
+    <div style={{display:'flex', alignItems:'center',alignContent:'center'}}>
       <div style={{display:'flex', justifyContent:'center'}}>
       {props.photo && (
         <div
@@ -14,6 +14,7 @@ const Message = (props) => {
             height: '50px',
             borderRadius: '50%',
             overflow: 'hidden',
+            marginLeft:'50px'
           }}
         >
           <img
