@@ -24,7 +24,7 @@ const Message = (props) => {
           />
               </div>)}
               <div style={{background:'#636e72',textAlign:'center',borderRadius:'20px',margin:'15px',padding:'20px'}}>
-            
+              <p>{props.userName}</p>
             <p>{props.text}</p>
             <p style={{fontSize:'8px'}}>{currentDate}</p>
             </div>

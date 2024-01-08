@@ -1,15 +1,14 @@
 import React, { useState,useEffect } from 'react';
 import Message from './Message';
-import removeIcon from './assets/delete.svg';
 import banIcon from './assets/ban.svg';
 import addUser from './assets/add-user.svg';
 import { useSelector} from 'react-redux';
 import { useParams } from 'react-router-dom';
 import './App.css';
 import connection from './connection.js';
-import { sendMessage } from '@microsoft/signalr/dist/esm/Utils.js';
 import { UserContext } from './UserContext';
 import { useContext } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 const Conversation = (props) => {
   const [newMessage, setNewMessage] = useState('');
@@ -18,30 +17,95 @@ const Conversation = (props) => {
   const [hovered, setHovered] = useState('#1a1a1a');
   const { id } = useParams();
   const user= useContext(UserContext);
-  const [newMessageSignal, setMessageSignal]=useState(null);
   const currentConversation=useSelector((state) => state.conversation.value);
   console.log(currentConversation);
   const [conversation,setCurrentConversation]=useState(currentConversation);
 
+
+  const addMessageToDb= async (message)=>{
+
+    const messageDto={
+      id:message.id,
+      userName:message.userName,
+      photo:message.photo,
+      conversationId:message.conversationId,
+      userId:message.userId,
+      text:message.text,
+      createdAt: Date.now(),
+      deletedAt:null,
+    }
+
+
+    try{
+      console.log('addMessageToDb');
+      const response= await fetch(`https://localhost:5123/api/conversations/addmessage`,{
+        method:'POST',
+        credentials:'include',
+        headers: {
+          "Content-Type": "application/json",
+          'Accept': 'application/json', 
+        },
+        body:JSON.stringify({messageDto}),
+      })
+  
+      if (response.ok) {
+        
+        console.log("Message add to db");
+      }
+  
+    } catch (error) {
+      setError(error.message || 'Something went wrong');
+    } finally {
+    }
+  }
+
   useEffect(() => {
-    // Підключення до SignalR при завантаженні компоненту
+
     connection.start().then(() => {
       console.log('Connected to SignalR');
     });
 
-
-    connection.on('SendMessage', (conversationId, userName, message) => {
-      if (conversation && conversationId.toString() === conversation.id) {
+     
+    connection.on('SendMessage', (conversationId, userName, message,userId) => {
+      if (conversationId.toString() === conversation.id) {
         console.log('SendMessage:', userName, message);
 
-        conversation.messages.push({
-          userName: user.name,
-          text: newMessage,
-          photo:user.photo
-        });
-        setCurrentConversation(conversation);
+        const member=conversation.members.find(m=>m.id==userId);
 
+        const text= {
+          id:uuidv4().toString(),
+          userName: userName,
+          photo:member.photo,
+          conversationId:conversationId,
+          userId:userId,
+          text: message,
+          createdAt: Date.now(),
+          deletedAt:null,
+        };
+
+        if(text!=null){
+          addMessageToDb(text);
+        }
         
+        console.log(" addMessageToDb");
+
+        setCurrentConversation((conversation) => ({
+          ...conversation,
+          messages: [
+            ...conversation.messages,
+            {
+              id:uuidv4(),
+              photo:member.photo,
+              userName: userName,
+              text: message,
+              createdAt: Date.now(),
+              userid:userId,
+              deleteAt:null,
+            },
+          ],
+        }));
+    
+           console.log(conversation);
       }
     });
 
@@ -70,7 +134,6 @@ const Conversation = (props) => {
   
 
   
-
   const containerStyle = {   
     backgraund:'#333',
     overflowY: 'auto',
@@ -80,12 +143,16 @@ const Conversation = (props) => {
   const sendMessageHandler = () => {
     
     if (newMessage.trim() !== '') {
-      connection.invoke('SendMessage', conversation.id,user.name, newMessage)
-        .catch((error) => {
-          console.error('Error sending message:', error);
-        });
 
-    
+      if (connection.state === 'Connected') {
+        connection.invoke('SendMessage', conversation.id, user.name, newMessage,user.id)
+          .catch((error) => {
+            console.error('Error sending message:', error);
+          });
+      } else {
+        console.error('Connection is not in the Connected state');
+      }
+  
       setNewMessage('');
     }
   }

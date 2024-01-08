@@ -5,10 +5,10 @@ namespace RedPawChat.Server
 {
     public class ChatHub :Hub
     {
-        public async Task SendMessage(string conversationId, string userName, string message)
+        public async Task SendMessage(string conversationId, string userName, string message, string userId)
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, conversationId.ToString());
-            await Clients.Group(conversationId.ToString()).SendAsync("SendMessage", conversationId, userName, message);
+            await Clients.Group(conversationId.ToString()).SendAsync("SendMessage",conversationId, userName, message,userId);
         }
 
         public async Task JoinDialog(string dialogId, string userName)

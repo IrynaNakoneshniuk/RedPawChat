@@ -7,7 +7,7 @@ namespace RedPawChat.Server.Controllers
 {
     [Route("api/contacts")]
     [ApiController]
-
+    [Authorize]
     public class ContactsController : Controller
     {
         private IUserDataAccess _userDataAccess;

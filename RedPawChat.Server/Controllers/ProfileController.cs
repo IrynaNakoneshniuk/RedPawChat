@@ -10,6 +10,8 @@ namespace RedPawChat.Server.Controllers
 {
     [Route("api/profile")]
     [ApiController]
+    [Authorize]
+
     public class ProfileController : Controller
     {
         private IUserDataAccess _dataAccess;

@@ -1,4 +1,5 @@
 ﻿using DataAccessRedPaw.UserAccessData;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RedPaw.Models;
 using RedPawChat.Server.DataAccess.Models.DTO;
@@ -7,6 +8,7 @@ namespace RedPawChat.Server.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class ConversationsController : ControllerBase
     {
         private readonly IUserDataAccess _userDataAccess;
@@ -156,6 +158,33 @@ namespace RedPawChat.Server.Controllers
            };
 
             return conversationDTO;
+        }
+
+        [HttpPost]
+        [Route("addmessage")]
+
+        public async Task<IActionResult> AddMessage([FromBody] MessagesDTO message)
+        {
+            var m = message;
+            if (message != null)
+            {
+                await _userDataAccess.CreateMessage(new Messages()
+                {
+                    ConversationId = message.ConversationId,
+                    Text = message.Text,
+                    CreatedAt = DateTime.UtcNow,
+                    UserId = message.UserId,
+                    DeletedAt = null,
+                    Id= message.Id
+                });
+
+                return Ok();
+            }
+            else
+            {
+                return BadRequest();
+            }
+            
         }
     }
 }
